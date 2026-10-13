@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot</title>
+    <style>
+        body{
+            margin:0;
+            height:100vh;
+            background:#f2f2f2;
+            font-family:Arial,sans-serif;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+        }
+        .container{
+            width: 50%;
+            margin: auto;
+            margin-top: 50px;
+            background: white;          
+            padding: 20px;
+            border-radius: 10px;
+        }
+        h1{
+            padding:20px;
+            background:#efeec1;
+            color:rgb(55, 57, 10);
+            text-align:center;
+            border-radius:10px 10px 0 0;
+            margin:0;
+        }
+        .subtitle{
+            text-align:center;
+            margin:10px 0 20px 0;
+            color:#555;
+        }
+        .input-area{
+            display:flex;
+            padding:15px;
+            border-top:1px solid #ddd;
+        }
+        .input-area input{
+            flex:1;
+            padding:12px;
+            border:1px solid #aaa;
+            border-radius:5px;
+            outline:none;
+        }
+          .input-area button{
+            margin-left:10px;
+            padding:12px 20px;
+            border:none;
+            border-radius:5px;
+            background:#07505f;
+            color:rgb(248, 249, 251);
+            cursor:pointer;
+        }
+         .input-area button:hover{
+            background:#3f082c;
+            transition-duration: 0.3s;
+
+        }
+        .suggestions{
+            display:flex;
+            justify-content:space-evenly;
+            margin:20px 0;
+        }
+        .bot-msg, .user-msg{
+            padding:10px 15px;
+            margin-bottom:10px;
+            border-radius:8px;
+            max-width:70%;
+            background:#f2f2f2;
+        }
+        #chat-box{
+            height: 300px;
+            overflow-y: scroll;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        input{
+            width: 70%;
+            padding: 10px;
+        }
+        button{
+           background-color: #2a67e9;
+           color: #FFFFFF;
+           border: 1px solid #0f2148;
+           padding: 12px 24px;
+           border-radius: 8px;
+           font-size: 16px;
+           font-weight: 400;
+           cursor: pointer;
+           transition: 0.3s;
+        }
+        button:hover {
+          background-color: #041648;
+          border-color: #1D4ED8;
+        }
+       #chat-box {
+        display: flex; 
+        flex-direction: column; 
+        gap: 12px; 
+        height: 300px; 
+        overflow-y: auto; 
+        padding: 20px; } 
+        /* User question - RIGHT */ 
+        .user-msg { 
+        align-self: flex-end; 
+        background-color: #2563EB; 
+        color: white; 
+        padding: 12px 16px; 
+        border-radius: 12px 12px 3px 12px; 
+        max-width: 70%; 
+        } 
+        /* Bot answer - LEFT */ 
+        .bot-msg { align-self: 
+            flex-start; 
+            background-color: #F1F5F9; 
+            color: #1E293B; 
+            padding: 12px 16px; 
+            border-radius: 12px 12px 12px 3px; 
+            max-width: 70%; } 
+            /* Time */ 
+        .time { 
+        font-size: 11px; 
+        margin-top: 5px; 
+        opacity: 0.7; 
+        text-align: right; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+            <h1>🤖 GenAI Academic Helpdesk</h1>
+            <p class="subtitle">Your intelligent campus assistant</p>
+
+        <div class="suggestions">
+           <button onclick="setQuestion('What are the library timings?')">Library</button>
+           <button onclick="setQuestion('What are the placement eligibility criteria?')">Placement</button>
+           <button onclick="setQuestion('How to apply for hostel?')">Hostel</button>
+           <button onclick="setQuestion('When do exams start?')">Exams</button>
+        </div>
+
+
+        <div id="chat-box">
+            <div class="bot-msg">
+                 Hello! I am your genAI Academic Assistant. Ask any about:
+                 Syllabus,Placement,Hostel,Exams and more.
+            </div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="question" placeholder="Ask your question....">
+        <button  onclick="ask()">Send</button>
+        </div>
+    </div>
+    <script>
+    function setQuestion(text) {
+        document.getElementById("question").value = text;
+    }
+
+    async function ask() {
+
+        let input = document.getElementById("question");
+        let q = input.value.trim();
+
+        if (q === "") {
+            return;
+        }
+
+        let box = document.getElementById("chat-box");
+
+        // Show user's question
+        box.innerHTML += `
+            <div class="user-msg">
+                ${q}
+                <div class="time">
+                    ${new Date().toLocaleTimeString()}
+                </div>
+            </div>
+        `;
+
+        // Clear input
+        input.value = "";
+
+        // Show typing message
+        let typingMessage = document.createElement("div");
+        typingMessage.className = "bot-msg";
+        typingMessage.innerHTML = `
+            AI is typing...
+            <div class="time">
+                ${new Date().toLocaleTimeString()}
+            </div>
+        `;
+
+        box.appendChild(typingMessage);
+
+        box.scrollTop = box.scrollHeight;
+
+        try {
+
+            // Send question to Flask
+            const response = await fetch("/ask", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    question: q
+                })
+            });
+
+            const data = await response.json();
+
+            // Remove "AI is typing..."
+            typingMessage.remove();
+
+            // Display answer
+            box.innerHTML += `
+                <div class="bot-msg">
+                    ${data.answer}
+                    <div class="time">
+                        ${new Date().toLocaleTimeString()}
+                    </div>
+                </div>
+            `;
+
+            box.scrollTop = box.scrollHeight;
+
+        } catch (error) {
+
+            typingMessage.remove();
+
+            box.innerHTML += `
+                <div class="bot-msg">
+                    Sorry, I couldn't connect to the server.
+                    <div class="time">
+                        ${new Date().toLocaleTimeString()}
+                    </div>
+                </div>
+            `;
+
+            console.error("Error:", error);
+        }
+    }
+
+
+    document.addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+
+        let input = document.getElementById("question");
+        let q = input.value.trim();
+
+        if (q !== "") {
+            ask();
+        }
+    }
+});
+</script>
+     
+</body>
+</html>
